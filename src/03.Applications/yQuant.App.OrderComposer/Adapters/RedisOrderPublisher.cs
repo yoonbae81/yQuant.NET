@@ -18,6 +18,8 @@ public class RedisOrderPublisher : IOrderPublisher
     {
         var db = _redis.GetDatabase();
         var orderJson = JsonSerializer.Serialize(order);
+
+        // Publish directly to 'order' channel
         await db.PublishAsync(RedisChannel.Literal("order"), orderJson);
     }
 }

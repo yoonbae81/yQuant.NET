@@ -35,12 +35,23 @@ public class BrokerGatewayTests
     }
 
     [TestMethod]
-    public async Task Worker_StartsAndStops_Successfully()
+    public async Task Worker_RegistersAccounts_OnStartup()
     {
         // Arrange
         var templateService = new yQuant.Infra.Notification.Telegram.Services.TelegramTemplateService();
         var telegramBuilder = new TelegramMessageBuilder(templateService);
-        var adapters = new Dictionary<string, IBrokerAdapter>();
+
+        var mockAdapter = new Mock<IBrokerAdapter>();
+        var adapters = new Dictionary<string, IBrokerAdapter>
+        {
+            { "TestAccount1", mockAdapter.Object },
+            { "TestAccount2", mockAdapter.Object }
+        };
+
+        var mockDatabase = new Mock<IDatabase>();
+        _redisMock!.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object>())).Returns(mockDatabase.Object);
+
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var worker = new Worker(
             _loggerMock!.Object,
@@ -48,7 +59,45 @@ public class BrokerGatewayTests
             adapters,
             _telegramNotifierMock!.Object,
             telegramBuilder,
-            new[] { _tradingLoggerMock!.Object });
+            new[] { _tradingLoggerMock!.Object },
+            mockConfiguration.Object);
+
+        // Act
+        // StartAsync calls RegisterAccountsAsync immediately now
+        await worker.StartAsync(CancellationToken.None);
+
+        // Cleanup - stop the worker to avoid background tasks running
+        await worker.StopAsync(CancellationToken.None);
+
+        // Assert
+        // Verify StringSetAsync was called with the correct key and JSON containing the account aliases
+        mockDatabase.Verify(db => db.StringSetAsync(
+            "broker:accounts",
+            It.Is<RedisValue>(v => v.ToString().Contains("TestAccount1") && v.ToString().Contains("TestAccount2")),
+            It.IsAny<TimeSpan?>(),
+            false,
+            When.Always,
+            CommandFlags.None), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Worker_StartsAndStops_Successfully()
+    {
+        // Arrange
+        var templateService = new yQuant.Infra.Notification.Telegram.Services.TelegramTemplateService();
+        var telegramBuilder = new TelegramMessageBuilder(templateService);
+        var adapters = new Dictionary<string, IBrokerAdapter>();
+
+        var mockConfiguration = new Mock<IConfiguration>();
+
+        var worker = new Worker(
+            _loggerMock!.Object,
+            _redisMock!.Object,
+            adapters,
+            _telegramNotifierMock!.Object,
+            telegramBuilder,
+            new[] { _tradingLoggerMock!.Object },
+            mockConfiguration.Object);
 
         // Act
         await worker.StartAsync(CancellationToken.None);

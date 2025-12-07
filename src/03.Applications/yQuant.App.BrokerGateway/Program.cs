@@ -4,6 +4,10 @@ using yQuant.Core.Ports.Output.Infrastructure;
 using yQuant.Infra.Broker.KIS;
 using yQuant.Infra.Notification.Telegram;
 
+using yQuant.Core.Utils;
+
+EnvValidator.Validate();
+
 var settings = new HostApplicationBuilderSettings
 {
     Args = args,
@@ -21,8 +25,9 @@ builder.Services.AddHttpClient<INotificationService, TelegramNotificationService
 builder.Services.AddSingleton<TelegramMessageBuilder>();
 
 // Register KIS HttpClient
-builder.Services.AddHttpClient("KIS");
-builder.Services.AddRedisMiddleware(builder.Configuration);
+builder.Services.AddHttpClient("KIS");// Redis
+builder.Services.AddRedisMiddleware(builder.Configuration)
+                .AddHeartbeat("BrokerGateway");
 
 builder.Services.AddSingleton<yQuant.Infra.Notification.Discord.Services.DiscordTemplateService>();
 builder.Services.AddSingleton<yQuant.Infra.Notification.Telegram.Services.TelegramTemplateService>();

@@ -10,6 +10,10 @@ using yQuant.Core.Ports.Output.Infrastructure;
 using yQuant.Core.Ports.Output.Policies;
 using yQuant.Infra.Redis.Extensions;
 
+using yQuant.Core.Utils;
+
+EnvValidator.Validate();
+
 var settings = new HostApplicationBuilderSettings
 {
     Args = args,
@@ -21,7 +25,8 @@ builder.Configuration.AddJsonFile("sharedsettings.json", optional: false, reload
                      .AddJsonFile($"sharedsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
                      .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
-builder.Services.AddRedisMiddleware(builder.Configuration);
+builder.Services.AddRedisMiddleware(builder.Configuration)
+                .AddHeartbeat("OrderComposer");
 
 // Register Core Services
 builder.Services.AddyQuantCore();
