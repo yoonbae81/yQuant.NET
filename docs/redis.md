@@ -25,18 +25,19 @@ All applications use the `yQuant.Infra.Redis` library for standardized connectio
 | Channel | Publisher | Subscriber | Payload | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `signal` | `App.Webhook` | `App.OrderComposer` | `Signal` | Raw trading signals from TradingView. |
-| `order` | `App.OrderComposer`, `App.Dashboard`, `App.Console` | `App.BrokerGateway` | `Order` | Executable orders. |
-| `execution` | `App.BrokerGateway` | `App.Dashboard`, `Notification` | `OrderResult` | Execution results (fill/reject). |
+| `order` | `App.OrderComposer`, `App.Web`, `App.Console` | `App.BrokerGateway` | `Order` | Executable orders. |
+| `execution` | `App.BrokerGateway` | `App.Web`, `Notification` | `OrderResult` | Execution results (fill/reject). |
+| `query` | `App.Web`, `App.Console` | `App.BrokerGateway` | `Query` | Information requests (price, account data, etc.). BrokerGateway fetches from Broker and updates Redis. |
 
 ### 3.3. Keys (State)
 | Key Pattern | Type | Writer | Reader | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `account:{Alias}` | Hash | `App.BrokerGateway` | `App.Dashboard`, `App.OrderComposer` | Static account metadata (Number, Broker, Active status). Secrets are **NOT** stored. |
-| `account:index` | Set | `App.BrokerGateway` | `App.Dashboard` | Set of all active account aliases. Used for discovery. |
-| `deposit:{Alias}` | Hash | `App.BrokerGateway` | `App.Dashboard`, `App.OrderComposer` | Real-time balance per currency (Field: `USD`, Value: `1000.00`). |
-| `position:{Alias}` | Hash | `App.BrokerGateway` | `App.Dashboard`, `App.OrderComposer` | Real-time positions (Field: `AAPL`, Value: `Position` JSON). |
-| `stock:{Ticker}` | Hash | `App.StockMaster`, `App.BrokerGateway` | `App.Dashboard`, `App.Console` | Merged static info (Name, Exchange) and dynamic market data (Price, Change). |
-| `scheduled:{Alias}` | String | `App.Dashboard` | `App.Dashboard` | List of scheduled orders (JSON Array). Stores schedule config (DaysOfWeek, TimeMode). |
+| `account:{Alias}` | Hash | `App.BrokerGateway` | `App.Web`, `App.OrderComposer` | Static account metadata (Number, Broker, Active status). Secrets are **NOT** stored. |
+| `account:index` | Set | `App.BrokerGateway` | `App.Web` | Set of all active account aliases. Used for discovery. |
+| `deposit:{Alias}` | Hash | `App.BrokerGateway` | `App.Web`, `App.OrderComposer` | Real-time balance per currency (Field: `USD`, Value: `1000.00`). |
+| `position:{Alias}` | Hash | `App.BrokerGateway` | `App.Web`, `App.OrderComposer` | Real-time positions (Field: `AAPL`, Value: `Position` JSON). |
+| `stock:{Ticker}` | Hash | `App.StockMaster`, `App.BrokerGateway` | `App.Web`, `App.Console` | Merged static info (Name, Exchange) and dynamic market data (Price, Change). |
+| `scheduled:{Alias}` | String | `App.Web` | `App.Web` | List of scheduled orders (JSON Array). Stores schedule config (DaysOfWeek, TimeMode). |
 
 ## 4. Data Flows
 
@@ -44,12 +45,12 @@ All applications use the `yQuant.Infra.Redis` library for standardized connectio
 1.  **Signal Source**: `App.Webhook` receives a webhook -> publishes to `signal`.
 2.  **Composition**: `App.OrderComposer` receives `signal` -> validates & composes `Order` -> publishes to `order`.
 3.  **Execution**: `App.BrokerGateway` receives `order` -> sends to Broker API -> publishes result to `execution`.
-4.  **Feedback**: `App.Dashboard` listens to `execution` for real-time updates.
+4.  **Feedback**: `App.Web` listens to `execution` for real-time updates.
 
 ### 4.2. Market Data Flow
 1.  **Master Data**: `App.StockMaster` runs daily -> writes static data (Name, Exchange) to `stock:{Ticker}` with TTL.
 2.  **Real-time Price**: `App.BrokerGateway` fetches prices periodically -> updates `price`, `changeRate` fields in `stock:{Ticker}` and refreshes TTL.
-3.  **Consumption**: `App.Dashboard` reads `stock:{Ticker}` to display portfolio values.
+3.  **Consumption**: `App.Web` reads `stock:{Ticker}` to display portfolio values.
 
 ### 4.3. Account Sync Flow
 1.  **Startup**: `App.BrokerGateway` connects to Broker -> writes `account:{Alias}` and adds to `account:index`.

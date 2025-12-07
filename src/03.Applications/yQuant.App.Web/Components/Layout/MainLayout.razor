@@ -1,6 +1,6 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider @bind-IsDarkMode="_isDarkMode" />
+<MudThemeProvider @bind-IsDarkMode="_isDarkMode" Theme="_customTheme" />
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudPopoverProvider />
@@ -9,15 +9,18 @@
     <MudAppBar Elevation="0">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
             OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h6" Class="ml-3">@GetPageTitle()</MudText>
         <yQuant.App.Dashboard.Components.Shared.SystemHealthIcons />
         <MudSpacer />
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
             Color="Color.Inherit" OnClick="@ToggleTheme" />
         <MudLink Href="https://learn.microsoft.com/aspnet/core/" Target="_blank" Color="Color.Inherit">About</MudLink>
     </MudAppBar>
-    <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1" Width="200px">
         <MudDrawerHeader>
-            <MudText Typo="Typo.h6">yQuant.App.Dashboard</MudText>
+            <MudLink Href="/" Underline="Underline.None">
+                <img src="/images/logo.png" alt="yQuant Logo" style="height: 50px; cursor: pointer;" />
+            </MudLink>
         </MudDrawerHeader>
         <NavMenu />
     </MudDrawer>
@@ -39,10 +42,25 @@
 @implements IDisposable
 @inject ISnackbar Snackbar
 @inject RealtimeEventService EventService
+@inject NavigationManager NavigationManager
 
 @code {
     bool _drawerOpen = true;
     bool _isDarkMode;
+
+    private MudTheme _customTheme = new MudTheme()
+        {
+            PaletteLight = new PaletteLight()
+            {
+                Primary = "#0066FF", // rgb(0, 102, 255)
+                AppbarBackground = "#0066FF",
+            },
+            PaletteDark = new PaletteDark()
+            {
+                Primary = "#0066FF", // rgb(0, 102, 255)
+                AppbarBackground = "#0066FF",
+            }
+        };
 
     protected override void OnInitialized()
     {
@@ -52,6 +70,26 @@
             _isDarkMode = true;
         }
         EventService.OnOrderExecutionReceived += HandleOrderExecution;
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+
+    private string GetPageTitle()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var path = uri.AbsolutePath.ToLower();
+
+        if (path == "/" || path.StartsWith("/dashboard")) return "Dashboard";
+        if (path.StartsWith("/assets")) return "Assets";
+        if (path.StartsWith("/scheduled")) return "Scheduled Orders";
+        if (path.StartsWith("/orderform")) return "Buy Order";
+        if (path.StartsWith("/performance")) return "Performance";
+
+        return "yQuant";
     }
 
     private void HandleOrderExecution(OrderResult result)
@@ -60,13 +98,13 @@
         {
             var severity = result.IsSuccess ? Severity.Success : Severity.Error;
             var message = result.IsSuccess
-                ? $"Order Executed: {result.OrderId} (Success)"
-                : $"Order Failed: {result.Message}";
+    ? $"Order Executed: {result.OrderId} (Success)"
+    : $"Order Failed: {result.Message}";
 
             Snackbar.Add(message, severity, config =>
-            {
-                config.ShowCloseIcon = true;
-                config.VisibleStateDuration = 5000;
+    {
+    config.ShowCloseIcon = true;
+    config.VisibleStateDuration = 5000;
             });
             StateHasChanged();
         });
@@ -85,5 +123,6 @@
     public void Dispose()
     {
         EventService.OnOrderExecutionReceived -= HandleOrderExecution;
+        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }

@@ -47,6 +47,11 @@ namespace yQuant.App.BrokerGateway
                 _ = HandleRequestAsync(message);
             });
 
+            await subscriber.SubscribeAsync(RedisChannel.Literal("query"), (channel, message) =>
+            {
+                // Handle query requests concurrently
+                _ = HandleQueryAsync(message);
+            });
 
             // Periodic Account Sync Removed (Event-driven only)
             // But we need to keep the process alive
@@ -256,6 +261,106 @@ namespace yQuant.App.BrokerGateway
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to deserialize or handle order message.");
+            }
+        }
+
+        private async Task HandleQueryAsync(RedisValue message)
+        {
+            try
+            {
+                var query = JsonSerializer.Deserialize<Query>(message.ToString());
+                if (query == null)
+                {
+                    _logger.LogWarning("Received null query");
+                    return;
+                }
+
+                _logger.LogInformation("Received query: Type={QueryType}, Target={Target}", query.QueryType, query.Target);
+
+                switch (query.QueryType.ToLower())
+                {
+                    case "price":
+                        await HandlePriceQueryAsync(query);
+                        break;
+                    default:
+                        _logger.LogWarning("Unknown query type: {QueryType}", query.QueryType);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to handle query message");
+            }
+        }
+
+        private async Task HandlePriceQueryAsync(Query query)
+        {
+            try
+            {
+                var ticker = query.Target;
+                _logger.LogInformation("Fetching price for {Ticker}", ticker);
+
+                // Try to get price from any adapter (use first available)
+                IBrokerAdapter? adapter = null;
+
+                // If account alias is specified, use that adapter
+                if (!string.IsNullOrEmpty(query.AccountAlias) && _adapters.TryGetValue(query.AccountAlias, out var specificAdapter))
+                {
+                    adapter = specificAdapter;
+                }
+                else
+                {
+                    // Use first available adapter
+                    adapter = _adapters.Values.FirstOrDefault();
+                }
+
+                if (adapter == null)
+                {
+                    _logger.LogWarning("No broker adapter available for price query");
+                    return;
+                }
+
+
+                // Prepare Redis access
+                var db = _redis.GetDatabase();
+                var key = $"stock:{ticker}";
+
+                // Check for cached exchange info
+                RedisValue exchangeValue = await db.HashGetAsync(key, "exchange");
+                yQuant.Core.Models.PriceInfo? priceInfo;
+
+                if (exchangeValue.HasValue && Enum.TryParse<yQuant.Core.Models.ExchangeCode>(exchangeValue.ToString(), true, out var exchange))
+                {
+                    _logger.LogInformation("Found exchange {Exchange} for {Ticker} in Redis. Querying directly.", exchange, ticker);
+                    priceInfo = await adapter.GetPriceAsync(ticker, exchange);
+                }
+                else
+                {
+                    _logger.LogInformation("Exchange not found for {Ticker} in Redis. Querying all possible exchanges.", ticker);
+                    priceInfo = await adapter.GetPriceAsync(ticker);
+                }
+
+                if (priceInfo != null)
+                {
+                    await db.HashSetAsync(key, new HashEntry[]
+                    {
+                        new("price", priceInfo.CurrentPrice.ToString()),
+                        new("changeRate", priceInfo.ChangeRate.ToString())
+                    });
+
+                    // Refresh TTL
+                    await db.KeyExpireAsync(key, TimeSpan.FromHours(25));
+
+                    _logger.LogInformation("Updated price for {Ticker}: {Price}", ticker, priceInfo.CurrentPrice);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to fetch price for {Ticker}", ticker);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling price query for {Ticker}", query.Target);
             }
         }
 

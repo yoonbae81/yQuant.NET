@@ -913,16 +913,23 @@ public class KISBrokerAdapter : IBrokerAdapter
                 {
                     var queryParams = new Dictionary<string, string>
                     {
-                        { "AUTH", "" },
                         { "EXCD", GetKisExchangeCode(exch) },
                         { "SYMB", ticker }
                     };
 
                     var response = await _client.ExecuteAsync<OverseasPriceResponse>("OverseasPrice", null, queryParams);
+
+                    _logger.LogInformation("OverseasPrice response for {Ticker} on {Exchange}: Output={Output}, Last={Last}, Rate={Rate}",
+                        ticker, exch,
+                        response?.Output != null ? "not null" : "null",
+                        response?.Output?.Last ?? "null",
+                        response?.Output?.Rate ?? "null");
+
                     if (response?.Output != null && !string.IsNullOrEmpty(response.Output.Last))
                     {
                         decimal.TryParse(response.Output.Last, out var price);
                         decimal.TryParse(response.Output.Rate, out var rate);
+                        _logger.LogInformation("Successfully parsed price for {Ticker}: {Price}, rate: {Rate}", ticker, price, rate);
                         return new PriceInfo(price, rate);
                     }
                 }
@@ -974,7 +981,6 @@ public class KISBrokerAdapter : IBrokerAdapter
             {
                 var queryParams = new Dictionary<string, string>
                 {
-                    { "AUTH", "" },
                     { "EXCD", GetKisExchangeCode(exchange) },
                     { "SYMB", ticker }
                 };

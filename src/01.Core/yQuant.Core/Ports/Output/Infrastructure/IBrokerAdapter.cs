@@ -25,4 +25,5 @@ public interface IBrokerAdapter
 
     // 현재가 및 등락률 조회
     Task<PriceInfo> GetPriceAsync(string ticker);
+    Task<PriceInfo> GetPriceAsync(string ticker, ExchangeCode exchange);
 }

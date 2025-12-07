@@ -123,6 +123,12 @@ namespace yQuant.Infra.Redis.Adapters
             throw new Exception($"Price not found for {ticker} in Redis.");
         }
 
+        public Task<PriceInfo> GetPriceAsync(string ticker, ExchangeCode exchange)
+        {
+            // Exchange doesn't matter for Redis lookup as keys are by ticker
+            return GetPriceAsync(ticker);
+        }
+
         public async Task<OrderResult> PlaceOrderAsync(Order order)
         {
             var db = _redis.GetDatabase();

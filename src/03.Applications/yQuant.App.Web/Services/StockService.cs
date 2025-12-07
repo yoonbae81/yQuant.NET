@@ -97,4 +97,92 @@ public class StockService
 
         return result;
     }
+
+    public async Task<(decimal Price, yQuant.Core.Models.CurrencyType Currency)?> GetCurrentPriceAsync(string ticker)
+    {
+        if (string.IsNullOrWhiteSpace(ticker)) return null;
+
+        try
+        {
+            var db = _redisService.Connection.GetDatabase();
+            var key = $"{KeyPrefix}{ticker}";
+
+            var priceValue = await db.HashGetAsync(key, "price");
+            var currencyValue = await db.HashGetAsync(key, "currency");
+
+            _logger.LogInformation("Redis read for {Ticker}: price={Price}, currency={Currency}",
+                ticker,
+                priceValue.HasValue ? priceValue.ToString() : "null",
+                currencyValue.HasValue ? currencyValue.ToString() : "null");
+
+            // If we have both price and currency, return them
+            if (priceValue.HasValue && currencyValue.HasValue)
+            {
+                if (decimal.TryParse(priceValue.ToString(), out var price) && price > 0)
+                {
+                    if (Enum.TryParse<yQuant.Core.Models.CurrencyType>(currencyValue.ToString(), true, out var currency))
+                    {
+                        _logger.LogInformation("Returning price for {Ticker}: {Price} {Currency}", ticker, price, currency);
+                        return (price, currency);
+                    }
+                }
+            }
+
+            // If we have currency but no price, request price from BrokerGateway
+            if (currencyValue.HasValue)
+            {
+                _logger.LogInformation("Price not available for {Ticker}, requesting from BrokerGateway", ticker);
+                await RequestPriceFromBroker(ticker);
+
+                // Wait a bit and retry
+                await Task.Delay(500);
+                priceValue = await db.HashGetAsync(key, "price");
+
+                if (priceValue.HasValue && decimal.TryParse(priceValue.ToString(), out var price) && price > 0)
+                {
+                    if (Enum.TryParse<yQuant.Core.Models.CurrencyType>(currencyValue.ToString(), true, out var currency))
+                    {
+                        _logger.LogInformation("Price fetched for {Ticker}: {Price} {Currency}", ticker, price, currency);
+                        return (price, currency);
+                    }
+                }
+
+                // Return null price but valid currency so order can still be placed
+                if (Enum.TryParse<yQuant.Core.Models.CurrencyType>(currencyValue.ToString(), true, out var curr))
+                {
+                    _logger.LogWarning("Price still not available for {Ticker}, returning currency only", ticker);
+                    return (0, curr);
+                }
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching current price for {Ticker}", ticker);
+            return null;
+        }
+    }
+
+    private async Task RequestPriceFromBroker(string ticker)
+    {
+        try
+        {
+            var query = new yQuant.Core.Models.Query
+            {
+                QueryType = "price",
+                Target = ticker
+            };
+
+            var subscriber = _redisService.Connection.GetSubscriber();
+            var message = System.Text.Json.JsonSerializer.Serialize(query);
+            await subscriber.PublishAsync(RedisChannel.Literal("query"), message);
+
+            _logger.LogInformation("Published price query for {Ticker}", ticker);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error publishing price query for {Ticker}", ticker);
+        }
+    }
 }

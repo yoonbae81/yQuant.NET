@@ -14,8 +14,7 @@
 
 <PageTitle>Scheduled Orders</PageTitle>
 
-<div class="d-flex align-center justify-space-between mb-4">
-    <MudText Typo="Typo.h4">Scheduled Orders</MudText>
+<div class="d-flex align-center mb-4">
     <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
         @foreach (var acc in AvailableAccounts)
         {
@@ -58,7 +57,7 @@
                     }
                     else
                     {
-                        <MudList T="ScheduledOrder" Clickable="true">
+                        <MudList T="ScheduledOrder">
                             @foreach (var schedule in _scheduledOrders.OrderBy(s => s.NextExecutionTime ?? DateTime.MaxValue))
                             {
                                 <MudListItem T="ScheduledOrder" OnClick="@(() => EditSchedule(schedule))">
@@ -130,7 +129,7 @@
 
                         <MudText Typo="Typo.subtitle2" Class="mt-4">Run Days</MudText>
                         <div class="d-flex gap-2 mb-2">
-                            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SelectEveryday">Daily
+                            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SelectEveryday">Everyday
                             </MudButton>
                             <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ClearDays">Clear</MudButton>
                         </div>

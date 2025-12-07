@@ -54,7 +54,7 @@ public class DashboardTests : Bunit.BunitContext
         _assetServiceMock!.Setup(s => s.GetAccountOverviewAsync("Test2")).ReturnsAsync(accounts[1]);
 
         // Act
-        var cut = Render<yQuant.App.Dashboard.Components.Pages.Dashboard>();
+        var cut = Render<yQuant.App.Web.Components.Pages.Dashboard>();
 
         // Assert
         cut.WaitForState(() => cut.FindAll("div.mud-card").Count == 2);
@@ -71,7 +71,7 @@ public class DashboardTests : Bunit.BunitContext
         _assetServiceMock!.Setup(s => s.GetAvailableAccountsAsync()).ReturnsAsync(new List<string>());
 
         // Act
-        var cut = Render<yQuant.App.Dashboard.Components.Pages.Dashboard>();
+        var cut = Render<yQuant.App.Web.Components.Pages.Dashboard>();
 
         // Assert
         Assert.IsTrue(cut.Markup.Contains("Loading data..."));

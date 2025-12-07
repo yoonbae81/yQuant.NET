@@ -1,3 +1,4 @@
+@page "/"
 @page "/dashboard"
 
 @using yQuant.App.Web.Services
@@ -7,10 +8,11 @@
 @inject AssetService AssetService
 @inject AccountCacheService AccountCacheService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Dashboard</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+<MudText Typo="Typo.h5" Class="mb-4">Accounts</MudText>
 
 @if (_accounts == null || !_accounts.Any())
 {
@@ -23,7 +25,7 @@ else
     @foreach (var account in _accounts)
         {
             <MudItem xs="12" md="6" lg="4">
-                <AssetSummaryCard Account="@account" />
+                <AssetSummaryCard Account="@account" OnAccountClick="@(() => ScrollToPosition(account.Alias))" />
             </MudItem>
         }
         </MudGrid>
@@ -31,9 +33,11 @@ else
     <MudText Typo="Typo.h5" Class="mt-6 mb-4">Positions</MudText>
     @foreach (var account in _accounts)
     {
-        <MudText Typo="Typo.h6" Class="mt-4 mb-2">Account: @account.Alias (@account.Broker)</MudText>
-        <PositionTable Positions="@account.Positions.Values.SelectMany(list => list)" AccountAlias="@(account.Alias)"
-            OnOrderAction="HandleOrderAction" />
+        <div id="position-@account.Alias">
+            <MudText Typo="Typo.h6" Class="mt-4 mb-2">Account: @account.Alias (@account.Broker)</MudText>
+            <PositionTable Positions="@account.Positions.Values.SelectMany(list => list)" AccountAlias="@(account.Alias)"
+                OnOrderAction="HandleOrderAction" />
+        </div>
     }
 }
 
@@ -64,5 +68,10 @@ else
         NavigationManager.NavigateTo($"/orderform?ticker={args.ticker}&action={args.action}&accountAlias={args.accountAlias}");
     }
 
+    private async Task ScrollToPosition(string accountAlias)
+    {
+        var elementId = $"position-{accountAlias}";
+        await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{elementId}')?.scrollIntoView({{ behavior: 'smooth', block: 'start' }});");
+    }
 
 }

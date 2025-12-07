@@ -291,6 +291,18 @@ public class KISClient : IKISClient
 
         response.EnsureSuccessStatusCode();
 
+        // Log raw JSON for OverseasPrice to debug empty fields
+        if (endpointName == "OverseasPrice")
+        {
+            var rawJson = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("KIS OverseasPrice raw response: {Json}", rawJson);
+
+            // Re-create content for deserialization
+            var jsonBytes = System.Text.Encoding.UTF8.GetBytes(rawJson);
+            response.Content = new ByteArrayContent(jsonBytes);
+            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+        }
+
         // Handle string response for PlaceOrderAsync which returns string in original code
         if (typeof(TResponse) == typeof(string))
         {

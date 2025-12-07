@@ -430,3 +430,4 @@ FodyWeavers.xsd
 
 *build*.txt
 output.txt
+.DS_Store

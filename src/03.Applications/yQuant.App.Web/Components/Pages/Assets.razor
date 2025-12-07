@@ -12,21 +12,9 @@
 @inject OrderPublisher OrderPublisher
 @inject ISnackbar Snackbar
 
-<div class="d-flex align-center justify-space-between mb-4">
-    <MudText Typo="Typo.h4">Asset Summary</MudText>
-    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
-        @foreach (var acc in _availableAccounts)
-        {
-            var isSelected = AccountAlias == acc.Alias;
-            <MudButton OnClick="@(() => OnAccountChanged(acc.Alias))"
-                Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
-                Color="@(isSelected ? Color.Primary : Color.Default)" Size="@(isSelected ? Size.Medium : Size.Small)"
-                Style="@(isSelected ? "font-weight: bold; box-shadow: 0 3px 5px rgba(0,0,0,0.2);" : "")">
-                @acc.Alias
-            </MudButton>
-        }
-    </MudButtonGroup>
-</div>
+<AccountSelector Accounts="_availableAccounts" SelectedAccountAlias="@AccountAlias"
+    SelectedAccountAliasChanged="@OnAccountChanged" />
+
 
 @if (account == null)
 {
@@ -89,23 +77,23 @@ else
                 <MudTh>Ticker</MudTh>
                 <MudTh>Name</MudTh>
                 <MudTh>Currency</MudTh>
-                <MudTh>Qty</MudTh>
-                <MudTh>Avg Price</MudTh>
-                <MudTh>Cur Price</MudTh>
-                <MudTh>PnL</MudTh>
-                <MudTh>Return %</MudTh>
+                <MudTh Style="text-align: right;">Qty</MudTh>
+                <MudTh Style="text-align: right;">Avg Price</MudTh>
+                <MudTh Style="text-align: right;">Cur Price</MudTh>
+                <MudTh Style="text-align: right;">PnL</MudTh>
+                <MudTh Style="text-align: right;">Return %</MudTh>
                 <MudTh>Actions</MudTh>
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Ticker">@context.Ticker</MudTd>
-                <MudTd DataLabel="Name">@GetStockName(context.Ticker)</MudTd>
+                <MudTd DataLabel="Name">@TruncateName(GetStockName(context.Ticker))</MudTd>
                 <MudTd DataLabel="Currency">@context.Currency</MudTd>
-                <MudTd DataLabel="Qty">@context.Qty</MudTd>
-                <MudTd DataLabel="Avg Price">@context.AvgPrice.ToString("N2")</MudTd>
-                <MudTd DataLabel="Cur Price">@context.CurrentPrice.ToString("N2")</MudTd>
-                <MudTd DataLabel="PnL" Style="@GetColorStyle(context.UnrealizedPnL)">
-                    @context.UnrealizedPnL.ToString("N2")</MudTd>
-                <MudTd DataLabel="Return %" Style="@GetColorStyle(context.UnrealizedPnL)">
+                <MudTd DataLabel="Qty" Style="text-align: right;">@context.Qty</MudTd>
+                <MudTd DataLabel="Avg Price" Style="text-align: right;">@context.AvgPrice.ToString("N0")</MudTd>
+                <MudTd DataLabel="Cur Price" Style="text-align: right;">@context.CurrentPrice.ToString("N0")</MudTd>
+                <MudTd DataLabel="PnL" Style="@("text-align: right; " + GetColorStyle(context.UnrealizedPnL))">
+                    @context.UnrealizedPnL.ToString("N0")</MudTd>
+                <MudTd DataLabel="Return %" Style="@("text-align: right; " + GetColorStyle(context.UnrealizedPnL))">
                     @GetReturnRate(context).ToString("F2")%</MudTd>
                 <MudTd DataLabel="Actions">
                     <MudButton OnClick="@(() => OpenQuickOrderDrawer(context, OrderAction.Buy))" Color="Color.Success"
@@ -184,6 +172,11 @@ else
     private string GetStockName(string ticker)
     {
         return _stockNames.TryGetValue(ticker, out var name) ? name : "-";
+    }
+
+    private string TruncateName(string name)
+    {
+        return name.Length > 20 ? name.Substring(0, 20) : name;
     }
 
     private string GetColorStyle(decimal value)
