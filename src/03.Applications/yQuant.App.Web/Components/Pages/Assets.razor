@@ -20,91 +20,91 @@
 {
     @if (!string.IsNullOrEmpty(AccountAlias))
     {
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     }
     else
     {
-        <MudText>Please select an account.</MudText>
+                <MudText>Please select an account.</MudText>
     }
 }
 else
 {
-    <MudGrid>
-    <MudItem xs="12" sm="6" md="4">
-        <MudCard>
-            <MudCardContent>
-                <MudText Typo="Typo.h6">Total Equity (KRW)</MudText>
-                <MudText Typo="Typo.h4">@account.GetTotalEquity(CurrencyType.KRW).ToString("N0") KRW</MudText>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudCard>
-            <MudCardContent>
-                <MudText Typo="Typo.h6">Total Equity (USD)</MudText>
-                <MudText Typo="Typo.h4">@account.GetTotalEquity(CurrencyType.USD).ToString("N2") USD</MudText>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="6" md="4">
-        <MudCard>
-            <MudCardContent>
-                <MudText Typo="Typo.h6">Account Info</MudText>
-                <MudText><b>Alias:</b> @account.Alias</MudText>
-                <MudText><b>Number:</b> @account.Number</MudText>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+        <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Total Equity (KRW)</MudText>
+                    <MudText Typo="Typo.h4">@account.GetTotalEquity(CurrencyType.KRW).ToString("N0") KRW</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Total Equity (USD)</MudText>
+                    <MudText Typo="Typo.h4">@account.GetTotalEquity(CurrencyType.USD).ToString("N2") USD</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Account Info</MudText>
+                    <MudText><b>Alias:</b> @account.Alias</MudText>
+                    <MudText><b>Number:</b> @account.Number</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-    <MudItem xs="12">
-        <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">Deposits</MudText>
-        <MudTable Items="@account.Deposits" Hover="true" Breakpoint="Breakpoint.Sm">
-            <HeaderContent>
-                <MudTh>Currency</MudTh>
-                <MudTh>Amount</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Currency">@context.Key</MudTd>
-                <MudTd DataLabel="Amount">@context.Value.ToString("N2")</MudTd>
-            </RowTemplate>
-        </MudTable>
-    </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">Deposits</MudText>
+            <MudTable Items="@account.Deposits" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Currency</MudTh>
+                    <MudTh>Amount</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Currency">@context.Key</MudTd>
+                    <MudTd DataLabel="Amount">@context.Value.ToString("N2")</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudItem>
 
-    <MudItem xs="12">
-        <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">Positions</MudText>
-        <MudTable Items="@account.Positions.Values.SelectMany(list => list)" Hover="true" Breakpoint="Breakpoint.Sm">
-            <HeaderContent>
-                <MudTh>Ticker</MudTh>
-                <MudTh>Name</MudTh>
-                <MudTh>Currency</MudTh>
-                <MudTh Style="text-align: right;">Qty</MudTh>
-                <MudTh Style="text-align: right;">Avg Price</MudTh>
-                <MudTh Style="text-align: right;">Cur Price</MudTh>
-                <MudTh Style="text-align: right;">PnL</MudTh>
-                <MudTh Style="text-align: right;">Return %</MudTh>
-                <MudTh>Actions</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Ticker">@context.Ticker</MudTd>
-                <MudTd DataLabel="Name">@TruncateName(GetStockName(context.Ticker))</MudTd>
-                <MudTd DataLabel="Currency">@context.Currency</MudTd>
-                <MudTd DataLabel="Qty" Style="text-align: right;">@context.Qty</MudTd>
-                <MudTd DataLabel="Avg Price" Style="text-align: right;">@context.AvgPrice.ToString("N0")</MudTd>
-                <MudTd DataLabel="Cur Price" Style="text-align: right;">@context.CurrentPrice.ToString("N0")</MudTd>
-                <MudTd DataLabel="PnL" Style="@("text-align: right; " + GetColorStyle(context.UnrealizedPnL))">
-                    @context.UnrealizedPnL.ToString("N0")</MudTd>
-                <MudTd DataLabel="Return %" Style="@("text-align: right; " + GetColorStyle(context.UnrealizedPnL))">
-                    @GetReturnRate(context).ToString("F2")%</MudTd>
-                <MudTd DataLabel="Actions">
-                    <MudButton OnClick="@(() => OpenQuickOrderDrawer(context, OrderAction.Buy))" Color="Color.Success"
-                        Size="Size.Small" Variant="Variant.Outlined" Style="padding: 2px 6px;">Buy</MudButton>
-                    <MudButton OnClick="@(() => OpenQuickOrderDrawer(context, OrderAction.Sell))" Color="Color.Error"
-                        Size="Size.Small" Variant="Variant.Outlined" Style="padding: 2px 6px;">Sell</MudButton>
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
-    </MudItem>
-</MudGrid>
+        <MudItem xs="12">
+            <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">Positions</MudText>
+            <MudTable Items="@account.Positions.Values.SelectMany(list => list)" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Ticker</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Currency</MudTh>
+                    <MudTh Style="text-align: right;">Qty</MudTh>
+                    <MudTh Style="text-align: right;">Avg Price</MudTh>
+                    <MudTh Style="text-align: right;">Cur Price</MudTh>
+                    <MudTh Style="text-align: right;">PnL</MudTh>
+                    <MudTh Style="text-align: right;">Return %</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Ticker">@context.Ticker</MudTd>
+                    <MudTd DataLabel="Name">@TruncateName(GetStockName(context.Ticker))</MudTd>
+                    <MudTd DataLabel="Currency">@context.Currency</MudTd>
+                    <MudTd DataLabel="Qty" Style="text-align: right;">@context.Qty</MudTd>
+                    <MudTd DataLabel="Avg Price" Style="text-align: right;">@context.AvgPrice.ToString("N0")</MudTd>
+                    <MudTd DataLabel="Cur Price" Style="text-align: right;">@context.CurrentPrice.ToString("N0")</MudTd>
+                    <MudTd DataLabel="PnL" Style="@("text-align: right; " + GetColorStyle(context.UnrealizedPnL))">
+                        @context.UnrealizedPnL.ToString("N0")</MudTd>
+                    <MudTd DataLabel="Return %" Style="@("text-align: right; " + GetColorStyle(context.UnrealizedPnL))">
+                        @GetReturnRate(context).ToString("F2")%</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudButton OnClick="@(() => OpenQuickOrderDrawer(context, OrderAction.Buy))" Color="Color.Success"
+                            Size="Size.Small" Variant="Variant.Outlined" Style="padding: 2px 6px;">Buy</MudButton>
+                        <MudButton OnClick="@(() => OpenQuickOrderDrawer(context, OrderAction.Sell))" Color="Color.Error"
+                            Size="Size.Small" Variant="Variant.Outlined" Style="padding: 2px 6px;">Sell</MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudItem>
+    </MudGrid>
 }
 
 <!-- Quick Order Drawer Component -->
@@ -252,6 +252,9 @@ else
             Snackbar.Add($"Order placed: {_orderAction} {quantity} {_orderTicker}", Severity.Success);
 
             _drawerOpen = false;
+
+            // Wait a moment for BrokerGateway to update Redis
+            await Task.Delay(500);
 
             // Refresh account data
             if (!string.IsNullOrEmpty(AccountAlias))

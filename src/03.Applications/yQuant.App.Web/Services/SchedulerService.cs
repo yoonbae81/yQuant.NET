@@ -91,18 +91,34 @@ public class SchedulerService : BackgroundService
         {
             var db = _redis.GetDatabase();
             Dictionary<string, List<ScheduledOrder>> grouped;
+            HashSet<string> currentAccounts;
 
             lock (_lock)
             {
                 grouped = _scheduledOrders.GroupBy(o => o.AccountAlias)
                     .ToDictionary(g => g.Key, g => g.ToList());
+                currentAccounts = _scheduledOrders.Select(o => o.AccountAlias).ToHashSet();
             }
 
-            foreach (var kvp in grouped)
+            // Get all accounts from the index to find accounts that no longer have orders
+            var allAccounts = await db.SetMembersAsync("account:index");
+
+            foreach (var account in allAccounts)
             {
-                var key = $"scheduled:{kvp.Key}";
-                var json = JsonSerializer.Serialize(kvp.Value, _jsonOptions);
-                await db.StringSetAsync(key, json);
+                var accountAlias = account.ToString();
+                var key = $"scheduled:{accountAlias}";
+
+                if (grouped.TryGetValue(accountAlias, out var orders))
+                {
+                    // Account has orders, save them
+                    var json = JsonSerializer.Serialize(orders, _jsonOptions);
+                    await db.StringSetAsync(key, json);
+                }
+                else
+                {
+                    // Account has no orders, delete the key
+                    await db.KeyDeleteAsync(key);
+                }
             }
         }
         catch (Exception ex)
