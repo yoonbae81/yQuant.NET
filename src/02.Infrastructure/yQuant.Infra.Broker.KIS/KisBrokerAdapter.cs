@@ -498,7 +498,7 @@ public class KISBrokerAdapter : IBrokerAdapter
                     Qty = p.HldgQty,
                     AvgPrice = p.PchsAvgPric,
                     CurrentPrice = p.Prpr,
-                    Source = "Domestic",
+                    BuyReason = "Domestic",
                     Exchange = ExchangeCode.KRX
                 }));
             }
@@ -545,7 +545,7 @@ public class KISBrokerAdapter : IBrokerAdapter
                             Qty = p.SellableQty,
                             AvgPrice = p.AvgPrc,
                             CurrentPrice = p.LastPrice,
-                            Source = "Overseas",
+                            BuyReason = "Overseas",
                             Exchange = exch
                         });
 

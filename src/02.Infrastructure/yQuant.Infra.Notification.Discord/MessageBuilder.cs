@@ -19,7 +19,7 @@ namespace yQuant.Infra.Notification.Discord
         {
             var values = new Dictionary<string, string>
             {
-                { "Source", signal.Source },
+                { "Source", signal.Strategy },
                 { "Ticker", signal.Ticker },
                 { "Action", signal.Action.ToString() },
                 { "Price", signal.Price?.ToString("F2") ?? "Market" },

@@ -71,7 +71,7 @@
 * `yQuant.App.Webhook`: TradingView 신호 수신 웹서버
 * `yQuant.App.OrderComposer`: 신호-주문 변환 엔진
 * `yQuant.App.BrokerGateway`: 증권사 연결 게이트웨이
-* `yQuant.App.Dashboard`: 웹 기반 모니터링 대시보드 (Blazor)
+* `yQuant.App.Web`: 웹 기반 모니터링 대시보드 (Blazor)
 * `yQuant.App.Console`: CLI 기반 수동 제어 도구
 * `yQuant.App.StockMaster`: 종목 마스터 데이터 관리
 * `yQuant.App.RedisVerifier`: Redis 연결 검증 도구
@@ -151,10 +151,10 @@ cd src/03.Applications/yQuant.App.OrderComposer
 dotnet run
 ```
 
-### **5.4. Dashboard 실행**
+### **5.4. Web Dashboard 실행**
 웹 기반 모니터링 및 제어 대시보드
 ```bash
-cd src/03.Applications/yQuant.App.Dashboard
+cd src/03.Applications/yQuant.App.Web
 dotnet run
 ```
 브라우저에서 `http://localhost:5000` 접속

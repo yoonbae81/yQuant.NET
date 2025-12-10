@@ -37,7 +37,7 @@ Core Layer의 Output Port를 구현하는 어댑터들이 위치
 - **Webhook**: 외부 신호 수신용 웹 서버
 - **OrderComposer**: 신호 수신 및 주문 생성 로직 구동
 - **BrokerGateway**: 증권사 연결 관리 및 주문 라우팅
-- **Dashboard**: 웹 기반 실시간 모니터링 및 수동 제어
+- **Web**: 웹 기반 실시간 모니터링 및 수동 제어
 - **Console**: 수동 제어 및 테스트용 CLI
 - **StockMaster**: 종목 마스터 데이터 동기화
 - **RedisVerifier**: Redis 연결 및 채널 진단 도구
@@ -46,7 +46,7 @@ Core Layer의 Output Port를 구현하는 어댑터들이 위치
 1. **Signal Ingestion**: TradingView Webhook → `yQuant.App.Webhook` → Redis Pub/Sub (`yquant:signals`)
 2. **Order Composition**: Redis (`yquant:signals`) → `yQuant.App.OrderComposer` → `OrderCompositionService` → `MarketRule` & `PositionSizer` → Redis (`yquant:orders`)
 3. **Order Execution**: Redis (`yquant:orders`) → `yQuant.App.BrokerGateway` → `KISAdapter` → Broker API
-4. **Execution Feedback**: Broker API → `BrokerGateway` → Redis (`yquant:executions`) → Dashboard / Discord / Telegram
+4. **Execution Feedback**: Broker API → `BrokerGateway` → Redis (`yquant:executions`) → Web / Discord / Telegram
 5. **Performance Tracking**: `BrokerGateway` → Redis (`yquant:performance`) → `QuantStats` → CSV Export
 6. **Master Data Sync**: `StockMaster` → Broker API → Redis Cache (`cache:master:...`)
-7. **Real-time Monitoring**: `Dashboard` → Redis Cache (`cache:account:...`, `cache:position:...`) → Web UI
+7. **Real-time Monitoring**: `Web` → Redis Cache (`cache:account:...`, `cache:position:...`) → Web UI

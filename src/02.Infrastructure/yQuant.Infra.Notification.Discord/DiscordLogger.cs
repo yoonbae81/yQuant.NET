@@ -179,7 +179,7 @@ namespace yQuant.Infra.Notification.Discord
         private string? GetSignalWebhookUrl(Signal signal)
         {
             // 1. Check Strategy mapping
-            if (_config.Signal != null && _config.Signal.TryGetValue(signal.Source, out var strategyUrl))
+            if (_config.Signal != null && _config.Signal.TryGetValue(signal.Strategy, out var strategyUrl))
             {
                 return strategyUrl;
             }

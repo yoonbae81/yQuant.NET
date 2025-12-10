@@ -62,7 +62,7 @@ public class TradingViewWebhookTests
             Price = 150.0m,
             Exchange = "NASDAQ",
             Currency = "USD",
-            Comment = "TestStrategy",
+            Strategy = "TestStrategy",
             Secret = "giC3CNMLMsQ0JlPDUreQ" // From appsettings.json
         };
         var jsonPayload = JsonSerializer.Serialize(payload);
@@ -94,7 +94,7 @@ public class TradingViewWebhookTests
             Price = 150.0m,
             Exchange = "NASDAQ",
             Currency = "USD",
-            Comment = "TestStrategy",
+            Strategy = "TestStrategy",
             Secret = "wrong-secret"
         };
         var jsonPayload = JsonSerializer.Serialize(payload);

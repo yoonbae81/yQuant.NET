@@ -106,7 +106,7 @@ app.MapPost("/webhook", async (HttpContext context, TradingViewPayload payload, 
     }
 
     // Data Normalization: TradingViewPayload to Signal
-    if (payload.Ticker == null || payload.Action == null || payload.Exchange == null || payload.Comment == null)
+    if (payload.Ticker == null || payload.Action == null || payload.Exchange == null || payload.Strategy == null)
     {
         context.Response.StatusCode = StatusCodes.Status400BadRequest;
         return Results.BadRequest("Missing required fields in payload.");
@@ -134,7 +134,7 @@ app.MapPost("/webhook", async (HttpContext context, TradingViewPayload payload, 
         Action = orderAction,
         Price = payload.Price,
         Strength = (int?)payload.Strength,
-        Source = payload.Comment,
+        Strategy = payload.Strategy,
         Timestamp = DateTime.UtcNow
     };
 

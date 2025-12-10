@@ -34,4 +34,4 @@ You can manage settings via the **Dashboard** under the **Settings** page. This 
 - `Policies:Sizing:Settings:MaxPositionRiskPct`: `0.02`
 
 ## Application Updates
-All applications (`Console`, `Dashboard`, `BrokerGateway`, `StockMaster`, `OrderComposer`) have been updated to read these values from Redis. Ensure `REDIS_CONNECTION_STRING` is set before running them.
+All applications (`Console`, `Web`, `BrokerGateway`, `StockMaster`, `OrderComposer`) have been updated to read these values from Redis. Ensure `REDIS_CONNECTION_STRING` is set before running them.

@@ -50,7 +50,7 @@ public class AssetServiceTests
                 Qty = 10,
                 AvgPrice = 70000,
                 CurrentPrice = 75000,
-                Source = "Domestic"
+                BuyReason = "Domestic"
             },
             new Position
             {
@@ -60,7 +60,7 @@ public class AssetServiceTests
                 Qty = 5,
                 AvgPrice = 150,
                 CurrentPrice = 180,
-                Source = "Overseas"
+                BuyReason = "Overseas"
             }
         };
 

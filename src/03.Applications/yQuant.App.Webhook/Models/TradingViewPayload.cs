@@ -8,6 +8,6 @@ public class TradingViewPayload
     public decimal? Price { get; set; }
     public string? Exchange { get; set; } // "NASDAQ", "KRX"
     public string? Currency { get; set; } // "currency" (String) -> CurrencyType (Enum)
-    public string? Comment { get; set; } // 매수 계기 (Source)
+    public string? Strategy { get; set; } // 매수 전략명 (TradingView Strategy Name)
     public string? Secret { get; set; }
 }

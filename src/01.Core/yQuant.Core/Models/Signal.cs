@@ -9,7 +9,7 @@ public class Signal
     public required OrderAction Action { get; set; }
     public decimal? Price { get; set; }
     public int? Strength { get; set; }
-    public required string Source { get; set; }
+    public required string Strategy { get; set; }
     public DateTime Timestamp { get; set; }
 
     public Signal()

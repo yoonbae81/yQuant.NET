@@ -31,7 +31,7 @@ namespace yQuant.Infra.Notification.Discord.Tests
                 Action = OrderAction.Buy,
                 Price = 150.00m,
                 Strength = 80,
-                Source = "TrendFollow_A",
+                Strategy = "TrendFollow_A",
                 Timestamp = DateTime.UtcNow
             };
 

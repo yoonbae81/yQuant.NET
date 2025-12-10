@@ -23,7 +23,7 @@ public class KISClient : IKISClient
 
     public Account Account => _account;
 
-    public KISClient(HttpClient httpClient, ILogger<KISClient> logger, Account account, KISApiConfig apiConfig)
+    public KISClient(HttpClient httpClient, ILogger<KISClient> logger, Account account, KISApiConfig apiConfig, int rateLimit = 20)
     {
         _httpClient = httpClient;
         _logger = logger;
@@ -40,7 +40,7 @@ public class KISClient : IKISClient
 
         _rateLimiter = new FixedWindowRateLimiter(new FixedWindowRateLimiterOptions
         {
-            PermitLimit = 20,
+            PermitLimit = rateLimit,
             Window = TimeSpan.FromSeconds(1),
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
             QueueLimit = 100

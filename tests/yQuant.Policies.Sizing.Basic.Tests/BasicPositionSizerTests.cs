@@ -44,7 +44,7 @@ public class BasicPositionSizerTests
             Strength = 100,
             Currency = CurrencyType.USD,
             Exchange = "NASDAQ", // Added required property
-            Source = "TestSource"   // Added required property
+            Strategy = "TestSource"   // Added required property
         };
         var account = new Account
         {
@@ -88,7 +88,7 @@ public class BasicPositionSizerTests
             Strength = 100,
             Currency = CurrencyType.USD,
             Exchange = "NASDAQ", // Added required property
-            Source = "TestSource"   // Added required property
+            Strategy = "TestSource"   // Added required property
         };
         var account = new Account
         {

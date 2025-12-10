@@ -60,7 +60,7 @@ public class RedisIntegrationTests
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.AreEqual(5, result.Count);
+        Assert.HasCount(5, result);
         Assert.AreEqual("Trading", result[0]);
         Assert.AreEqual("Yoonseo", result[4]);
     }

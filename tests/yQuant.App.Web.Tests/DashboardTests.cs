@@ -58,9 +58,9 @@ public class DashboardTests : Bunit.BunitContext
 
         // Assert
         cut.WaitForState(() => cut.FindAll("div.mud-card").Count == 2);
-        Assert.AreEqual(2, cut.FindAll("div.mud-card").Count);
-        Assert.IsTrue(cut.Markup.Contains("Test1"));
-        Assert.IsTrue(cut.Markup.Contains("Test2"));
+        Assert.HasCount(2, cut.FindAll("div.mud-card"));
+        Assert.Contains("Test1", cut.Markup);
+        Assert.Contains("Test2", cut.Markup);
     }
 
     [TestMethod]
@@ -74,6 +74,6 @@ public class DashboardTests : Bunit.BunitContext
         var cut = Render<yQuant.App.Web.Components.Pages.Dashboard>();
 
         // Assert
-        Assert.IsTrue(cut.Markup.Contains("Loading data..."));
+        Assert.Contains("Loading data...", cut.Markup);
     }
 }

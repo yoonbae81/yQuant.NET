@@ -12,6 +12,7 @@ public class Order
     public required decimal Qty { get; set; }
     public decimal? Price { get; set; } // Nullable for market orders
     public DateTime Timestamp { get; set; }
+    public string? BuyReason { get; set; } // "Manual", "Schedule", or "Webhook:{StrategyName}"
 
     public Order()
     {

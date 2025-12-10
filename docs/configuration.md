@@ -45,7 +45,7 @@ Telegram__ChatId=your_chat_id
 
 # Run any application
 dotnet run --project src/03.Applications/yQuant.App.Console
-dotnet run --project src/03.Applications/yQuant.App.Dashboard
+dotnet run --project src/03.Applications/yQuant.App.Web
 dotnet run --project src/03.Applications/yQuant.App.BrokerGateway
 ```
 
@@ -102,7 +102,7 @@ Accounts__1__Credentials__AppSecret=secret2
 - Uses the configuration for the specified `AccountAlias`
 - Supports all commands: `assets`, `price`, `buy`, `sell`, `report`
 
-### BrokerGateway & Dashboard
+### BrokerGateway & Web
 - Support multiple accounts simultaneously
 - Automatically load all configured accounts from the Accounts array
 

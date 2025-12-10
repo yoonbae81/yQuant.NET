@@ -5,7 +5,7 @@ This document details the Redis implementation for the `yQuant` system, serving 
 ## 1. Overview
 Redis is used in `yQuant` for two primary purposes:
 1.  **Pub/Sub Messaging**: Facilitating real-time, event-driven communication between microservices (e.g., Webhook -> OrderComposer -> BrokerGateway).
-2.  **State Caching**: Storing shared state (Accounts, Positions, Prices) to decouple read-heavy services (Dashboard) from the Broker Gateway.
+2.  **State Caching**: Storing shared state (Accounts, Positions, Prices) to decouple read-heavy services (Web) from the Broker Gateway.
 
 ## 2. Connection & Configuration
 All applications use the `yQuant.Infra.Redis` library for standardized connection management.

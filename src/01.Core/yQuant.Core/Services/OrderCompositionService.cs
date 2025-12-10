@@ -86,11 +86,12 @@ public class OrderCompositionService : IOrderCompositionUseCase
         }
         else
         {
-             _logger.LogWarning("Invalid Exchange Code in Signal: {Exchange}", signal.Exchange);
-             // Default or return? Let's default to NASDAQ for now or handle error.
-             order.Exchange = ExchangeCode.NASDAQ; 
+            _logger.LogWarning("Invalid Exchange Code in Signal: {Exchange}", signal.Exchange);
+            // Default or return? Let's default to NASDAQ for now or handle error.
+            order.Exchange = ExchangeCode.NASDAQ;
         }
         order.Currency = signal.Currency ?? CurrencyType.USD;
+        order.BuyReason = $"Webhook:{signal.Strategy}";
 
         // 6. Validate Order
         if (!_positionSizer.ValidateOrder(order, account, out var failureReason))

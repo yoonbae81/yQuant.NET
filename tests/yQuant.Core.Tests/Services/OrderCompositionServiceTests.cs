@@ -40,34 +40,34 @@ public class OrderCompositionServiceTests
     public async Task ProcessSignalAsync_ShouldPublishOrder_WhenAllConditionsMet()
     {
         // Arrange
-        var signal = new Signal 
-        { 
-            Ticker = "AAPL", 
-            Exchange = "NASDAQ", 
-            Action = OrderAction.Buy, 
-            Price = 150m, 
-            Timestamp = DateTime.UtcNow, 
-            Source = "Strategy1" 
+        var signal = new Signal
+        {
+            Ticker = "AAPL",
+            Exchange = "NASDAQ",
+            Action = OrderAction.Buy,
+            Price = 150m,
+            Timestamp = DateTime.UtcNow,
+            Strategy = "Strategy1"
         };
         var accountAlias = "ACC-001";
-        var account = new Account 
-        { 
-            Alias = accountAlias, 
-            Number = "12345", 
+        var account = new Account
+        {
+            Alias = accountAlias,
+            Number = "12345",
             Broker = "Test Broker",
             AppKey = "test_key",
             AppSecret = "test_secret",
             Active = true,
             Deposits = new Dictionary<CurrencyType, decimal>()
         };
-        var order = new Order 
-        { 
-            AccountAlias = accountAlias, 
-            Ticker = "AAPL", 
-            Action = OrderAction.Buy, 
-            Type = OrderType.Market, 
-            Qty = 10, 
-            Price = 150m 
+        var order = new Order
+        {
+            AccountAlias = accountAlias,
+            Ticker = "AAPL",
+            Action = OrderAction.Buy,
+            Type = OrderType.Market,
+            Qty = 10,
+            Price = 150m
         };
 
         _mockMarketRule.Setup(r => r.CanHandle("NASDAQ")).Returns(true);
@@ -92,14 +92,14 @@ public class OrderCompositionServiceTests
     public async Task ProcessSignalAsync_ShouldNotPublish_WhenMarketClosed()
     {
         // Arrange
-        var signal = new Signal 
-        { 
-            Ticker = "AAPL", 
-            Exchange = "NASDAQ", 
-            Action = OrderAction.Buy, 
-            Price = 150m, 
-            Timestamp = DateTime.UtcNow, 
-            Source = "Strategy1" 
+        var signal = new Signal
+        {
+            Ticker = "AAPL",
+            Exchange = "NASDAQ",
+            Action = OrderAction.Buy,
+            Price = 150m,
+            Timestamp = DateTime.UtcNow,
+            Strategy = "Strategy1"
         };
 
         _mockMarketRule.Setup(r => r.CanHandle("NASDAQ")).Returns(true);
@@ -111,19 +111,19 @@ public class OrderCompositionServiceTests
         // Assert
         _mockOrderPublisher.Verify(p => p.PublishOrderAsync(It.IsAny<Order>()), Times.Never);
     }
-    
+
     [Fact]
     public async Task ProcessSignalAsync_ShouldNotPublish_WhenAccountNotFound()
     {
         // Arrange
-        var signal = new Signal 
-        { 
-            Ticker = "AAPL", 
-            Exchange = "NASDAQ", 
-            Action = OrderAction.Buy, 
-            Price = 150m, 
-            Timestamp = DateTime.UtcNow, 
-            Source = "Strategy1" 
+        var signal = new Signal
+        {
+            Ticker = "AAPL",
+            Exchange = "NASDAQ",
+            Action = OrderAction.Buy,
+            Price = 150m,
+            Timestamp = DateTime.UtcNow,
+            Strategy = "Strategy1"
         };
 
         _mockMarketRule.Setup(r => r.CanHandle("NASDAQ")).Returns(true);

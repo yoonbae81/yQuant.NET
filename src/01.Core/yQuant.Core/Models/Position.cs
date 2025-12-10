@@ -11,7 +11,7 @@ public class Position
     public required decimal AvgPrice { get; set; }
     public required decimal CurrentPrice { get; set; }
     public decimal ChangeRate { get; set; }
-    public string? Source { get; set; }
+    public string? BuyReason { get; set; }
     public ExchangeCode? Exchange { get; set; }
 
     // Calculated Property

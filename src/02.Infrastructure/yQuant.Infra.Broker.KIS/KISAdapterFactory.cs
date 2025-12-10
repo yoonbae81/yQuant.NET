@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using yQuant.Core.Models;
 using yQuant.Core.Ports.Output.Infrastructure;
+using System.Text.Json;
 
 namespace yQuant.Infra.Broker.KIS;
 
@@ -17,6 +18,7 @@ public class KISAdapterFactory : IBrokerAdapterFactory
     private readonly Dictionary<string, KISClient> _clients = new();
     private readonly Dictionary<string, IBrokerAdapter> _adapters = new();
     private readonly object _lock = new();
+    private int _rateLimit = 20;
 
 
 
@@ -33,7 +35,27 @@ public class KISAdapterFactory : IBrokerAdapterFactory
         // Load API Config internally
         var apiPath = Path.Combine(AppContext.BaseDirectory, "API");
         _apiConfig = KISApiConfig.Load(apiPath);
-        System.Console.WriteLine("DEBUG: KISAdapterFactory initialized.");
+
+        // Load Rate Limit
+        var configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        if (File.Exists(configPath))
+        {
+            try
+            {
+                var json = File.ReadAllText(configPath);
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("RateLimit", out var limitProp) && limitProp.TryGetInt32(out var limit))
+                {
+                    _rateLimit = limit;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load rate limit from appsettings.json. Using default.");
+            }
+        }
+
+        System.Console.WriteLine($"DEBUG: KISAdapterFactory initialized. RateLimit: {_rateLimit}");
     }
 
     public IEnumerable<string> GetAvailableAccounts()
@@ -137,7 +159,7 @@ public class KISAdapterFactory : IBrokerAdapterFactory
 
         var clientLogger = _loggerFactory.CreateLogger<KISClient>();
         var httpClient = _httpClientFactory.CreateClient("KIS");
-        client = new KISClient(httpClient, clientLogger, account, _apiConfig);
+        client = new KISClient(httpClient, clientLogger, account, _apiConfig, _rateLimit);
 
         _clients[account.Alias] = client;
         return client;

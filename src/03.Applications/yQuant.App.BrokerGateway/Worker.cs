@@ -376,7 +376,7 @@ namespace yQuant.App.BrokerGateway
             // Note: The previous code handled multiple request types (GetPrice, etc.) via 'broker:requests'.
             // The new design splits 'order' channel specifically for ORDERS.
             // What about GetPrice/GetDeposit requests from other apps?
-            // The design says "Reader: App.Dashboard, App.OrderComposer" for keys.
+            // The design says "Reader: App.Web, App.OrderComposer" for keys.
             // So they should READ keys directly, not ask BrokerGateway via channel.
             // EXCEPT for 'Price' which might need on-demand fetch if cache miss?
             // The design says "Writer: App.BrokerGateway (On-demand / Stream)".
@@ -450,33 +450,22 @@ namespace yQuant.App.BrokerGateway
                 }
 
                 decimal amountChange = order.Qty * executionPrice;
-                // Add some estimated fee? (Ignored for now to match requirement "simple local update")
 
-                // Update Logic:
-                // Buy -> Decrease Currency (e.g. USD)
-                // Sell -> Increase Currency
-                // Note: This assumes simple Cash account. Margin/Credit logic is complex and skipped here.
-
-                // Determine Currency to update.
-                // Order.Currency is usually the Settlement Currency (e.g. USD for US Stk)
-
+                // Use Lua script for atomic update to prevent race conditions
                 var currencyField = order.Currency.ToString();
+                var actionStr = order.Action.ToString();
 
-                // Get current value
-                var currentVal = await db.HashGetAsync(key, currencyField);
-                decimal currentAmount = 0;
-                if (currentVal.HasValue) decimal.TryParse(currentVal.ToString(), out currentAmount);
+                var result = await db.ScriptEvaluateAsync(
+                    RedisLuaScripts.UpdateDepositScript,
+                    new RedisKey[] { key },
+                    new RedisValue[] { currencyField, actionStr, amountChange.ToString() }
+                );
 
-                if (order.Action == OrderAction.Buy)
+                if (_logger.IsEnabled(LogLevel.Debug))
                 {
-                    currentAmount -= amountChange;
+                    _logger.LogDebug("Updated deposit for {Alias} {Currency}: {NewBalance}",
+                        alias, currencyField, result.ToString());
                 }
-                else
-                {
-                    currentAmount += amountChange;
-                }
-
-                await db.HashSetAsync(key, currencyField, currentAmount.ToString());
             }
             catch (Exception ex)
             {
@@ -490,92 +479,98 @@ namespace yQuant.App.BrokerGateway
             {
                 var key = $"position:{alias}";
 
-                // Get existing position for this ticker
-                // Redis Hash Field: Ticker
-                var posJson = await db.HashGetAsync(key, order.Ticker);
-                Position position;
-
-                if (posJson.HasValue)
+                // Determine execution price
+                decimal executionPrice = order.Price ?? 0;
+                if (executionPrice == 0)
                 {
-                    position = JsonSerializer.Deserialize<Position>(posJson.ToString()) ?? new Position
+                    // Try to get from Redis stock price
+                    var priceVal = await db.HashGetAsync($"stock:{order.Ticker}", "price");
+                    if (priceVal.HasValue && decimal.TryParse(priceVal.ToString(), out var p))
                     {
-                        AccountAlias = alias,
-                        Ticker = order.Ticker,
-                        Currency = order.Currency,
-                        Qty = 0,
-                        AvgPrice = 0,
-                        CurrentPrice = 0
-                    };
-                }
-                else
-                {
-                    // New Position
-                    position = new Position
-                    {
-                        AccountAlias = alias,
-                        Ticker = order.Ticker,
-                        Currency = order.Currency,
-                        Qty = 0,
-                        AvgPrice = 0, // Will be set below
-                        CurrentPrice = order.Price ?? 0
-                    };
-                }
-
-                // Update Qty
-                if (order.Action == OrderAction.Buy)
-                {
-                    // Update Avg Price for Buy
-                    // NewAvg = ((OldQty * OldAvg) + (NewQty * NewPrice)) / (OldQty + NewQty)
-                    decimal executionPrice = order.Price ?? position.CurrentPrice;
-                    // If prediction failed, use 0? No, try to get from Redis stock price if still 0
-                    if (executionPrice == 0)
-                    {
-                        var pVal = await db.HashGetAsync($"stock:{order.Ticker}", "price");
-                        if (pVal.HasValue) decimal.TryParse(pVal.ToString(), out executionPrice);
-                    }
-
-                    if (position.Qty + order.Qty > 0)
-                    {
-                        position.AvgPrice = ((position.Qty * position.AvgPrice) + (order.Qty * executionPrice)) / (position.Qty + order.Qty);
-                    }
-                    else
-                    {
-                        // Should not happen for Buy unless short covering? Assuming Long only for now.
-                        position.AvgPrice = executionPrice;
-                    }
-                    position.Qty += order.Qty;
-                }
-                else // Sell
-                {
-                    // Avg Price usually doesn't change on Sell (FIFO/Avg Cost), only Qty reduces.
-                    // Real PnL is realized.
-                    position.Qty -= order.Qty;
-                }
-
-                // If Qty <= 0, remove or keep 0?
-                // Logic says: "position also... redis only change quantity".
-                // If 0, we can keep it as 0 or remove. 
-                // KIS usually returns empty list if no position.
-                // Let's keep it as 0 to avoid "Key not found" issues until next sync clears it.
-                // Or better, if 0, remove the field to match "No Position".
-
-                if (position.Qty <= 0)
-                {
-                    // If we sold more than we have (Short?), let it be negative?
-                    // Assuming Long-only:
-                    if (position.Qty == 0)
-                    {
-                        await db.HashDeleteAsync(key, order.Ticker);
-                        return;
+                        executionPrice = p;
                     }
                 }
 
-                await db.HashSetAsync(key, order.Ticker, JsonSerializer.Serialize(position));
+                if (executionPrice == 0)
+                {
+                    _logger.LogWarning("Could not estimate execution price for local position update. Skipping.");
+                    return;
+                }
+
+                // Use Lua script for atomic update to prevent race conditions
+                var result = await db.ScriptEvaluateAsync(
+                    RedisLuaScripts.UpdatePositionScript,
+                    new RedisKey[] { key },
+                    new RedisValue[]
+                    {
+                        order.Ticker,                      // ARGV[1]
+                        order.Action.ToString(),           // ARGV[2]
+                        order.Qty.ToString(),              // ARGV[3]
+                        executionPrice.ToString(),         // ARGV[4]
+                        alias,                             // ARGV[5]
+                        order.Currency.ToString(),         // ARGV[6]
+                        executionPrice.ToString(),         // ARGV[7] - fallback price
+                        order.BuyReason ?? "Unknown"       // ARGV[8] - BuyReason
+                    }
+                );
+
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    if (!result.IsNull && !string.IsNullOrEmpty(result.ToString()))
+                    {
+                        try
+                        {
+                            var response = JsonSerializer.Deserialize<LuaPositionUpdateResponse>(result.ToString());
+                            if (response != null)
+                            {
+                                if (string.IsNullOrEmpty(response.Position))
+                                {
+                                    _logger.LogDebug("Position for {Ticker} in {Alias} was closed (qty = 0)",
+                                        order.Ticker, alias);
+                                }
+                                else
+                                {
+                                    _logger.LogDebug("Updated position for {Ticker} in {Alias}",
+                                        order.Ticker, alias);
+                                }
+
+                                // Log if BuyReason changed
+                                if (response.BuyReasonChanged)
+                                {
+                                    _logger.LogInformation(
+                                        "BuyReason changed for {Ticker} in {Alias}: '{OldReason}' → '{NewReason}' (kept original)",
+                                        order.Ticker, alias, response.OldReason, response.NewReason);
+                                }
+                            }
+                        }
+                        catch (JsonException)
+                        {
+                            // Fallback for unexpected response format
+                            _logger.LogDebug("Updated position for {Ticker} in {Alias}", order.Ticker, alias);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to perform local position update for {Alias}", alias);
             }
+        }
+
+        // Response model for Lua script
+        private class LuaPositionUpdateResponse
+        {
+            [System.Text.Json.Serialization.JsonPropertyName("position")]
+            public string Position { get; set; } = "";
+
+            [System.Text.Json.Serialization.JsonPropertyName("buyReasonChanged")]
+            public bool BuyReasonChanged { get; set; }
+
+            [System.Text.Json.Serialization.JsonPropertyName("oldReason")]
+            public string OldReason { get; set; } = "";
+
+            [System.Text.Json.Serialization.JsonPropertyName("newReason")]
+            public string NewReason { get; set; } = "";
         }
     }
 }

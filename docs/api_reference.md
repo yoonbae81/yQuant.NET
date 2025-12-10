@@ -16,7 +16,7 @@ yQuant 시스템은 내부적으로 Redis Pub/Sub 메시징을 사용하며, 외
 ### Pub/Sub Channels
 - `yquant:signals`: TradingView Webhook에서 수신된 원본 신호 (Webhook → OrderComposer)
 - `yquant:orders`: 검증 및 생성이 완료된 실행 가능한 주문 (OrderComposer → BrokerGateway)
-- `yquant:executions`: 증권사에서 체결된 결과 통보 (BrokerGateway → Dashboard/Notification)
+- `yquant:executions`: 증권사에서 체결된 결과 통보 (BrokerGateway → Web/Notification)
 - `yquant:errors`: 시스템 에러 로그 (All Components → Logging)
 - `yquant:performance`: 일간 성과 데이터 (BrokerGateway → QuantStats)
 

@@ -19,21 +19,21 @@
 
 @if (_currentAccount != null && _currentAccount.Deposits.Any())
 {
-    <MudCard Class="mb-4">
-    <MudCardContent>
-        <MudText Typo="Typo.h6" Class="mb-2">Available Deposits</MudText>
-        <MudGrid>
-            @foreach (var deposit in _currentAccount.Deposits.OrderByDescending(d => d.Value))
+        <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-2">Available Deposits</MudText>
+            <MudGrid>
+                @foreach (var deposit in _currentAccount.Deposits.OrderByDescending(d => d.Value))
                 {
-                    <MudItem xs="6" sm="4" md="3">
-                        <MudText Typo="Typo.body2" Color="Color.Default">
-                            <strong>@deposit.Key:</strong> @FormatCurrency(deposit.Value, deposit.Key.ToString())
-                        </MudText>
-                    </MudItem>
+                            <MudItem xs="6" sm="4" md="3">
+                                <MudText Typo="Typo.body2" Color="Color.Default">
+                                    <strong>@deposit.Key:</strong> @FormatCurrency(deposit.Value, deposit.Key.ToString())
+                                </MudText>
+                            </MudItem>
                 }
-            </MudGrid>
-        </MudCardContent>
-    </MudCard>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
 }
 
 <MudCard>
@@ -52,30 +52,30 @@
                 <!-- Stock Name and Current Price -->
                 @if (!string.IsNullOrEmpty(OrderModel.Ticker))
                 {
-                    <MudItem xs="12">
+                        <MudItem xs="12">
                         @if (!string.IsNullOrEmpty(_stockName))
                         {
-                            <MudText Typo="Typo.h6" Color="Color.Primary">@_stockName</MudText>
+                                    <MudText Typo="Typo.h6" Color="Color.Primary">@_stockName</MudText>
                         }
                         @if (_currentPrice > 0)
                         {
-                            <MudText Typo="Typo.body1" Color="Color.Info">
-                                Current Price: <strong>@FormatCurrency(_currentPrice, _stockCurrency) @_stockCurrency</strong>
-                            </MudText>
+                                    <MudText Typo="Typo.body1" Color="Color.Info">
+                                        Current Price: <strong>@FormatCurrency(_currentPrice, _stockCurrency) @_stockCurrency</strong>
+                                    </MudText>
                         }
                         else if (!string.IsNullOrEmpty(_stockCurrency))
                         {
-                            <MudText Typo="Typo.body2" Color="Color.Warning">
-                                Price info not available. Market order will use current market price.
-                            </MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Warning">
+                                        Price info not available. Market order will use current market price.
+                                    </MudText>
                         }
                         else if (_isLoadingPrice)
                         {
-                            <MudText Typo="Typo.body2" Color="Color.Default">
-                                <MudProgressCircular Size="Size.Small" Indeterminate="true" /> Loading info...
-                            </MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Default">
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" /> Loading info...
+                                    </MudText>
                         }
-                    </MudItem>
+                        </MudItem>
                 }
 
                 <!-- Quantity Input -->
@@ -88,13 +88,13 @@
                 <!-- Total Amount Display -->
                 @if (_currentPrice > 0 && OrderModel.Qty > 0)
                 {
-                    <MudItem xs="12" sm="6">
-                        <MudTextField T="string" Value="@GetTotalAmountDisplay()" Label="Total Amount"
-                            Variant="Variant.Outlined" ReadOnly="true" Disabled="true" />
-                    </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField T="string" Value="@GetTotalAmountDisplay()" Label="Total Amount"
+                                Variant="Variant.Outlined" ReadOnly="true" Disabled="true" />
+                        </MudItem>
 
-                    <!-- Deposit Usage Indicator -->
-                    <MudItem xs="12">
+                        <!-- Deposit Usage Indicator -->
+                        <MudItem xs="12">
                         @if (_depositPercentage >= 0)
                         {
                             var color = _depositPercentage > 100 ? Color.Error :
@@ -104,17 +104,17 @@
                             _depositPercentage > 80 ? "⚠️ High deposit usage" :
                             "✓ Sufficient funds";
 
-                            <MudAlert Severity="@GetSeverity(color)" Dense="true" Class="mb-2">
+                                    <MudAlert Severity="@GetSeverity(color)" Dense="true" Class="mb-2">
                                 @message - Using <strong>@_depositPercentage.ToString("F1")%</strong> of available
                                 @_stockCurrency deposit
-                            </MudAlert>
+                                    </MudAlert>
 
-                            <MudProgressLinear Color="@color" Value="@Math.Min((double)_depositPercentage, 100.0)"
-                                Size="Size.Large" Class="mb-2">
-                                <MudText Typo="Typo.body2">@_depositPercentage.ToString("F1")%</MudText>
-                            </MudProgressLinear>
+                                    <MudProgressLinear Color="@color" Value="@Math.Min((double)_depositPercentage, 100.0)"
+                                        Size="Size.Large" Class="mb-2">
+                                        <MudText Typo="Typo.body2">@_depositPercentage.ToString("F1")%</MudText>
+                                    </MudProgressLinear>
                         }
-                    </MudItem>
+                        </MudItem>
                 }
 
                 <!-- Submit Button -->
@@ -324,6 +324,7 @@
             OrderModel.Type = OrderType.Market;
             OrderModel.Price = 0;
             OrderModel.Action = OrderAction.Buy; // Ensure it's always Buy
+            OrderModel.BuyReason = "Manual"; // Set buy reason for manual orders
 
             await OrderPublisher.PublishOrderAsync(OrderModel);
             Snackbar.Add($"Buy order placed: {OrderModel.Qty} x {OrderModel.Ticker}", Severity.Success);
